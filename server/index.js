@@ -39,4 +39,41 @@ app.use((req, res, next) => {
 });
 
 // ── Routes ──
-app.use('/api/events', eventRoutes)
+app.use('/api/events', eventRoutes);
+app.use('/api/bookings', bookingRoutes);
+app.use('/api/upload', uploadRoutes);
+
+app.get('/api/health', (req, res) =>
+  res.json({ status: 'ok', timestamp: new Date() })
+);
+
+// Test route — hit this in browser to verify DB is working
+app.get('/api/test-booking', async (req, res) => {
+  try {
+    const { pool } = require('./config/db');
+    const [events] = await pool.query('SELECT id, title, available_seats FROM events LIMIT 3');
+    const [bookings] = await pool.query('SELECT COUNT(*) as count FROM bookings');
+    res.json({ 
+      status: 'DB connected ',
+      events,
+      total_bookings: bookings[0].count
+    });
+  } catch (err) {
+    res.status(500).json({ status: 'DB error ', error: err.message });
+  }
+});
+
+// ── Error handler ──
+app.use(errorHandler);
+
+// ── Socket.IO ──
+setupSockets(io);
+
+// ── Start ──
+const PORT = process.env.PORT || 5000;
+initDB().then(() => {
+  server.listen(PORT, () => {
+    console.log(` Server running at http://localhost:${PORT}`);
+    console.log(` Uploads served at http://localhost:${PORT}/uploads`);
+  });
+});

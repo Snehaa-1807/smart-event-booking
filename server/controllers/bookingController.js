@@ -65,4 +65,18 @@ const cancelBooking = async (req, res, next) => {
     const updatedEvent = await EventModel.findById(booking.event_id);
     req.io?.emit('seats:updated', {
       event_id: booking.event_id,
-      availab
+      available_seats: updatedEvent.available_seats
+    });
+
+    res.json({ success: true, message: 'Booking cancelled successfully' });
+  } catch (err) { next(err); }
+};
+
+const getStats = async (req, res, next) => {
+  try {
+    const stats = await BookingModel.getStats();
+    res.json({ success: true, data: stats });
+  } catch (err) { next(err); }
+};
+
+module.exports = { getBookings, createBooking, cancelBooking, getStats };
