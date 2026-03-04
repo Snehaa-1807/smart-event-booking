@@ -1,0 +1,258 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --purple: #7c3aed;
+  --purple-mid: #8b46f0;
+  --purple-light: #9d5cf5;
+  --purple-bg: #6d28d9;
+  --gold: #f5c842;
+  --gold2: #ffd84d;
+  --black: #0a0a0a;
+  --black2: #111111;
+  --white: #ffffff;
+  --gray: #888888;
+  --gray2: #555555;
+}
+
+@layer base {
+  body { font-family: 'Inter', sans-serif; }
+  h1,h2,h3,h4,h5 { font-family: 'Urbanist', sans-serif; }
+}
+
+@layer utilities {
+  .font-urban { font-family: 'Urbanist', sans-serif; }
+
+  /* Glass nav */
+  .glass-nav {
+    background: rgba(124, 58, 237, 0.15);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+  }
+  .glass-nav-scrolled {
+    background: rgba(109, 40, 217, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+  }
+
+  /* Purple gradient hero bg */
+  .hero-bg {
+    background: linear-gradient(135deg, #5b21b6 0%, #7c3aed 30%, #8b46f0 60%, #6d28d9 100%);
+    position: relative;
+  }
+  .hero-bg::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 50%, rgba(255,255,255,0.06) 0%, transparent 60%),
+      radial-gradient(ellipse 40% 60% at 80% 30%, rgba(139,70,240,0.4) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  /* Wavy SVG lines like Summitra */
+  .hero-wave {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    opacity: 0.12;
+  }
+
+  /* Pill CTA button — white with purple arrow like Summitra */
+  .btn-pill-white {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    background: #fff;
+    color: #0a0a0a;
+    font-family: 'Urbanist', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+    border-radius: 9999px;
+    padding: 0;
+    padding-left: 1.75rem;
+    overflow: hidden;
+    transition: all 0.25s ease;
+    border: none;
+    cursor: pointer;
+  }
+  .btn-pill-white .arrow-circle {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 9999px;
+    background: var(--purple);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 1rem;
+    flex-shrink: 0;
+    transition: background 0.2s;
+  }
+  .btn-pill-white:hover { background: #f0f0f0; transform: translateY(-1px); box-shadow: 0 8px 30px rgba(0,0,0,0.2); }
+  .btn-pill-white:hover .arrow-circle { background: #6d28d9; }
+
+  /* Location badge */
+  .location-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: rgba(245, 200, 66, 0.15);
+    border: 1px solid rgba(245, 200, 66, 0.3);
+    border-radius: 9999px;
+    padding: 0.5rem 1.2rem;
+    color: var(--gold);
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .location-icon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: var(--gold);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #0a0a0a;
+    flex-shrink: 0;
+  }
+
+  /* Speaker portrait card */
+  .speaker-card {
+    border-radius: 1.25rem;
+    overflow: hidden;
+    position: relative;
+    cursor: pointer;
+  }
+  .speaker-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top center;
+    transition: transform 0.5s ease;
+  }
+  .speaker-card:hover img { transform: scale(1.04); }
+  .speaker-card .speaker-info {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 1.25rem 1.25rem 1.1rem;
+    background: linear-gradient(to top, rgba(0,0,0,0.85) 0%, transparent 100%);
+  }
+
+  /* Countdown box */
+  .countdown-box {
+    background: #1a1a1a;
+    border: 1px solid #2a2a2a;
+    border-radius: 0.75rem;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    min-width: 5.5rem;
+  }
+
+  /* About text fade */
+  .about-text-fade {
+    background: linear-gradient(180deg, #ffffff 40%, rgba(255,255,255,0.25) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Skeleton */
+  .skeleton {
+    background: linear-gradient(90deg, #1a1a1a 25%, #242424 50%, #1a1a1a 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite;
+  }
+}
+
+@keyframes shimmer { 0%{background-position:-200% 0} 100%{background-position:200% 0} }
+@keyframes floatY { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-14px)} }
+@keyframes floatY2 { 0%,100%{transform:translateY(-8px)} 50%{transform:translateY(8px)} }
+@keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+.animate-float { animation: floatY 6s ease-in-out infinite; }
+.animate-float2 { animation: floatY2 8s ease-in-out infinite; }
+
+/* Marquee */
+@keyframes marquee { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+.marquee-inner { display:flex; gap:3rem; animation:marquee 28s linear infinite; white-space:nowrap; }
+
+/* ── Parallax layer classes ── */
+.parallax-slow { will-change: transform; }
+.parallax-mid { will-change: transform; }
+.parallax-fast { will-change: transform; }
+
+/* ── Ticket card styles for Event Details ── */
+.ticket-card {
+  background: #111;
+  border: 1px solid rgba(255,255,255,0.07);
+  border-radius: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+.ticket-card::before {
+  content: '';
+  position: absolute;
+  left: -1px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #0a0a0a;
+  border-right: 1px solid rgba(255,255,255,0.07);
+}
+.ticket-card::after {
+  content: '';
+  position: absolute;
+  right: -1px; top: 50%; transform: translateY(-50%);
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #0a0a0a;
+  border-left: 1px solid rgba(255,255,255,0.07);
+}
+.ticket-notch-line {
+  border-left: 2px dashed rgba(255,255,255,0.08);
+  height: 100%;
+  position: absolute;
+  left: 50%;
+  top: 0;
+}
+
+/* ── Confetti canvas ── */
+#confetti-canvas {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* ── Pricing highlight purple card ── */
+.pricing-purple {
+  background: linear-gradient(145deg, #6d28d9 0%, #7c3aed 60%, #8b5cf6 100%);
+}
+
+/* ── Category pills ── */
+.cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(124,58,237,0.12);
+  border: 1px solid rgba(124,58,237,0.25);
+  color: #a78bfa;
+  border-radius: 9999px;
+  padding: 0.35rem 0.85rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.cat-pill:hover, .cat-pill.active {
+  background: rgba(124,58,237,0.25);
+  border-color: rgba(124,58,237,0.5);
+  color: #c4b5fd;
+}
+
+/* ── Progress ring ── */
+.progress-ring-circle {
+  transition: stroke-dashoffset 1.2s cubic-bezier(0.23,1,0.32,1);
+  transform: rotate(-90deg);
+  transform-origin: 50% 50%;
+}
