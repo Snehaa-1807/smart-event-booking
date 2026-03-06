@@ -1,7 +1,10 @@
 import axios from 'axios';
 
+// In dev: Vite proxy handles /api → localhost:5000
+const BASE_URL = import.meta.env.VITE_API_URL || 'https://booking-flow.onrender.com/api';
+
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 });
@@ -9,11 +12,9 @@ const api = axios.create({
 api.interceptors.response.use(
   res => res,
   err => {
-    // Log full error for debugging
     console.error('API Error:', {
       status: err.response?.status,
       url: err.config?.url,
-      body: err.config?.data,
       response: err.response?.data,
     });
     const message =
@@ -44,12 +45,16 @@ export const uploadAPI = {
   uploadImage: async (file) => {
     const formData = new FormData();
     formData.append('image', file);
-    const res = await axios.post('/api/upload', formData, {
+    const serverUrl = import.meta.env.VITE_SERVER_URL || 'https://booking-flow.onrender.com';
+    const res = await axios.post(`${serverUrl}/api/upload`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       timeout: 30000,
     });
     return res.data;
   },
 };
+
+// Export base server URL for direct fetch calls
+export const SERVER_URL = import.meta.env.VITE_SERVER_URL || 'https://booking-flow.onrender.com';
 
 export default api;
