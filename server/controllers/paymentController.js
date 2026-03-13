@@ -19,7 +19,7 @@ const createOrder = async (req, res) => {
       return res.status(400).json({ success: false, message: `Only ${event.available_seats} seats available` });
     }
 
-    const amount = event.price * quantity * 100; // Razorpay needs amount in paise
+    const amount = Math.round(event.price * quantity * 100); // Razorpay needs integer paise
 
     const order = await razorpay.orders.create({
       amount,

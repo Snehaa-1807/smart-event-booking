@@ -404,7 +404,7 @@ export default function EventDetailsPage() {
         prefill: {
           name: form.name.trim(),
           email: form.email.trim(),
-          contact: form.mobile.trim(),
+          contact: '+91' + form.mobile.trim().replace(/\D/g, '').slice(-10),
         },
         theme: { color: '#7c3aed' },
         handler: async function (response) {

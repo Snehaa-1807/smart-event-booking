@@ -27,8 +27,8 @@ export default function Navbar() {
     ? scrolled ? 'bg-[#6d28d9]' : 'bg-transparent'
     : 'bg-[#6d28d9]';
 
-  const userLinks  = [{ label: 'Events', href: '/events' }, { label: 'My Tickets', href: '/my-bookings' }];
-  const adminLinks = [{ label: 'Events', href: '/events' }, { label: 'Dashboard', href: '/admin' }];
+  const userLinks  = [{ label: 'Home', href: '/' }, { label: 'Events', href: '/events' }, { label: 'My Tickets', href: '/my-bookings' }];
+  const adminLinks = [{ label: 'Home', href: '/' }, { label: 'Events', href: '/events' }, { label: 'Dashboard', href: '/admin' }];
   const navLinks   = isAdmin ? adminLinks : userLinks;
 
   function handleLogout() { logout(); navigate('/'); }
@@ -51,7 +51,7 @@ export default function Navbar() {
         <div className="hidden md:flex items-center gap-6">
           {navLinks.map(({ label, href }) => (
             <Link key={label} to={href}
-              className={`text-sm font-medium transition-colors ${location.pathname.startsWith(href) ? 'text-white' : 'text-white/60 hover:text-white'}`}
+              className={`text-sm font-medium transition-colors ${(href === '/' ? location.pathname === '/' : location.pathname.startsWith(href)) ? 'text-white' : 'text-white/60 hover:text-white'}`}
               style={{ fontFamily: 'Urbanist, sans-serif' }}>
               {label}
             </Link>
