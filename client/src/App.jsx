@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import Lenis from 'lenis';
 import Navbar from './components/layout/Navbar';
@@ -8,7 +8,9 @@ import LandingPage from './pages/LandingPage';
 import EventsPage from './pages/EventsPage';
 import EventDetailsPage from './pages/EventDetailsPage';
 import AdminPage from './pages/AdminPage';
+import AdminLogin from './pages/AdminLogin';
 import MyBookingsPage from './pages/MyBookingsPage';
+import { useAdminStore } from './store/adminStore';
 
 const pageVariants = {
   initial: { opacity: 0, y: 18 },
@@ -24,10 +26,15 @@ function PageWrapper({ children }) {
   );
 }
 
+// Protect admin route — redirect to login if not authenticated
+function AdminGuard() {
+  const isAdmin = useAdminStore(s => s.isAdmin);
+  return isAdmin ? <PageWrapper><AdminPage /></PageWrapper> : <Navigate to="/admin-login" replace />;
+}
+
 export default function App() {
   const location = useLocation();
 
-  // Lenis smooth scroll — global
   useEffect(() => {
     const lenis = new Lenis({
       duration: 1.2,
@@ -36,32 +43,32 @@ export default function App() {
       wheelMultiplier: 0.9,
       touchMultiplier: 1.5,
     });
-
-    function raf(time) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
+    function raf(time) { lenis.raf(time); requestAnimationFrame(raf); }
     requestAnimationFrame(raf);
-
     return () => lenis.destroy();
   }, []);
 
-  // Scroll to top on route change
   useEffect(() => { window.scrollTo(0, 0); }, [location.pathname]);
+
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
-      <Navbar />
+      {/* Hide navbar on admin login page */}
+      {!isAdminRoute && <Navbar />}
+      {isAdminRoute && location.pathname === '/admin' && <Navbar />}
       <AnimatePresence mode="wait">
         <Routes location={location} key={location.pathname}>
           <Route path="/" element={<PageWrapper><LandingPage /></PageWrapper>} />
           <Route path="/events" element={<PageWrapper><EventsPage /></PageWrapper>} />
           <Route path="/events/:id" element={<PageWrapper><EventDetailsPage /></PageWrapper>} />
-          <Route path="/admin" element={<PageWrapper><AdminPage /></PageWrapper>} />
           <Route path="/my-bookings" element={<PageWrapper><MyBookingsPage /></PageWrapper>} />
+          <Route path="/admin-login" element={<PageWrapper><AdminLogin /></PageWrapper>} />
+          <Route path="/admin" element={<AdminGuard />} />
         </Routes>
       </AnimatePresence>
-      <Footer />
+      {!isAdminRoute && <Footer />}
+      {isAdminRoute && location.pathname === '/admin' && <Footer />}
     </div>
   );
 }
