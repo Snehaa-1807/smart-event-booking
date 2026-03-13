@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, X, ChevronRight, LogOut, ShieldCheck } from 'lucide-react';
 import { useAdminStore } from '../../store/adminStore';
+import { useUserStore } from '../../store/userStore';
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -12,6 +13,8 @@ export default function Navbar() {
   const isHome = location.pathname === '/';
   const isAdmin = useAdminStore(s => s.isAdmin);
   const logout = useAdminStore(s => s.logout);
+  const user = useUserStore(s => s.user);
+  const userLogout = useUserStore(s => s.logout);
 
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 10);
@@ -82,6 +85,17 @@ export default function Navbar() {
                   <span className="arrow-circle"><ChevronRight size={16} color="white" strokeWidth={2.5} /></span>
                 </Link>
               </motion.div>
+              {user && (
+                <div className="flex items-center gap-2 pl-2">
+                  <div className="w-8 h-8 rounded-full overflow-hidden flex items-center justify-center text-xs font-bold text-white"
+                    style={{ background: 'linear-gradient(135deg,#6d28d9,#7c3aed)' }}>
+                    {user.avatar
+                      ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                      : user.name?.[0]?.toUpperCase()}
+                  </div>
+                  <button onClick={userLogout} className="text-xs text-white/40 hover:text-white transition-colors">Sign out</button>
+                </div>
+              )}
             </>
           )}
         </div>

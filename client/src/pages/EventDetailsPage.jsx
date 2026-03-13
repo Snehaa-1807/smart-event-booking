@@ -8,10 +8,12 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import confetti from 'canvas-confetti';
-import { eventsAPI, bookingsAPI } from '../utils/api';
-import { resolveImage } from '../utils/imageHelper';
+import { eventsAPI, bookingsAPI, SERVER_URL } from '../utils/api';
+import { resolveImage, FALLBACK } from '../utils/imageHelper';
 import socket from '../utils/socket';
 import { useEventStore } from '../store/index.js';
+import { useUserStore } from '../store/userStore';
+import LoginModal from '../components/ui/LoginModal';
 
 /* ─── Draw full ticket onto a canvas for download ─── */
 async function drawTicketCanvas(canvas, booking, event, form, quantity, totalAmount, categoryName) {
@@ -203,6 +205,14 @@ function SeatRing({ available, total }) {
         <span className="text-xl font-black text-white font-urban">{available}</span>
         <span className="text-[10px] text-white/40 uppercase tracking-wider">left</span>
       </div>
+    <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSuccess={(userData) => {
+          setForm(f => ({ ...f, name: userData.name, email: userData.email }));
+          setStep(1);
+        }}
+      />
     </div>
   );
 }
@@ -307,6 +317,8 @@ export default function EventDetailsPage() {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingResult, setBookingResult] = useState(null);
   const [liked, setLiked] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const user = useUserStore(s => s.user);
 
   const qrCanvasRef = useRef(null);
   const heroRef = useRef(null);
@@ -385,7 +397,7 @@ export default function EventDetailsPage() {
       };
 
       // Use raw fetch to avoid any axios interceptor issues
-      const response = await fetch('http://localhost:5000/api/bookings', {
+      const response = await fetch(`${SERVER_URL}/api/bookings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -672,7 +684,11 @@ export default function EventDetailsPage() {
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       disabled={event.available_seats === 0}
-                      onClick={() => setStep(1)}
+                      onClick={() => {
+                        if (event.available_seats === 0) return;
+                        if (!user) { setShowLoginModal(true); return; }
+                        setStep(1);
+                      }}
                       className="btn-pill-white w-full justify-center"
                       style={{
                         height: '3.25rem', fontSize: '0.95rem',
