@@ -205,14 +205,6 @@ function SeatRing({ available, total }) {
         <span className="text-xl font-black text-white font-urban">{available}</span>
         <span className="text-[10px] text-white/40 uppercase tracking-wider">left</span>
       </div>
-    <LoginModal
-        isOpen={showLoginModal}
-        onClose={() => setShowLoginModal(false)}
-        onSuccess={(userData) => {
-          setForm(f => ({ ...f, name: userData.name, email: userData.email }));
-          setStep(1);
-        }}
-      />
     </div>
   );
 }
@@ -948,6 +940,14 @@ export default function EventDetailsPage() {
 
         </AnimatePresence>
       </div>
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        onSuccess={(userData) => {
+          setForm(f => ({ ...f, name: userData.name, email: userData.email }));
+          setStep(1);
+        }}
+      />
     </div>
   );
 }
