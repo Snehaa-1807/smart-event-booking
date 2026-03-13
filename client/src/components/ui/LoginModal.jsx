@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Mail, Lock, User, Eye, EyeOff, Ticket } from 'lucide-react';
+import { useGoogleLogin } from '@react-oauth/google';
 import { useUserStore } from '../../store/userStore';
+import toast from 'react-hot-toast';
 
 export default function LoginModal({ isOpen, onClose, onSuccess }) {
   const login = useUserStore(s => s.login);
-  const [mode, setMode] = useState('login'); // 'login' | 'signup'
+  const [mode, setMode] = useState('login');
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -17,21 +19,51 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
     setError('');
   }
 
+  // Real Google Login
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setGoogleLoading(true);
+      try {
+        // Fetch user info from Google
+        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+          headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+        });
+        const profile = await res.json();
+
+        const userData = {
+          name: profile.name,
+          email: profile.email,
+          avatar: profile.picture,
+          provider: 'google',
+        };
+
+        login(userData);
+        toast.success(`Welcome, ${profile.name}! 🎉`);
+        onSuccess?.(userData);
+        onClose();
+      } catch (err) {
+        toast.error('Google sign-in failed. Please try again.');
+      } finally {
+        setGoogleLoading(false);
+      }
+    },
+    onError: () => {
+      setGoogleLoading(false);
+      toast.error('Google sign-in was cancelled or failed.');
+    },
+  });
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError('');
-
-    // Basic validation
     if (!form.email || !form.password) return setError('Please fill all fields');
     if (mode === 'signup' && !form.name) return setError('Please enter your name');
     if (!/\S+@\S+\.\S+/.test(form.email)) return setError('Enter a valid email');
     if (form.password.length < 6) return setError('Password must be at least 6 characters');
 
     setLoading(true);
-    await new Promise(r => setTimeout(r, 800));
+    await new Promise(r => setTimeout(r, 600));
 
-    // Simple client-side auth (no backend auth endpoint needed)
-    // In production this would call an API
     const userData = {
       name: mode === 'signup' ? form.name : form.email.split('@')[0],
       email: form.email,
@@ -40,26 +72,8 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
     };
 
     login(userData);
+    toast.success(`Welcome${mode === 'signup' ? ', ' + form.name : ' back'}! 🎉`);
     setLoading(false);
-    onSuccess?.(userData);
-    onClose();
-  }
-
-  async function handleGoogle() {
-    setGoogleLoading(true);
-    setError('');
-    await new Promise(r => setTimeout(r, 1000));
-
-    // Simulate Google login — in production integrate Firebase/Google OAuth
-    const userData = {
-      name: 'Google User',
-      email: 'user@gmail.com',
-      avatar: `https://ui-avatars.com/api/?name=Google+User&background=7c3aed&color=fff`,
-      provider: 'google',
-    };
-
-    login(userData);
-    setGoogleLoading(false);
     onSuccess?.(userData);
     onClose();
   }
@@ -70,26 +84,22 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
         <>
           {/* Backdrop */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
             onClick={onClose}
             className="fixed inset-0 z-50"
             style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(6px)' }}
           />
 
           {/* Modal */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.92, y: 20 }}
-            transition={{ type: 'spring', stiffness: 300, damping: 25 }}
-            className="fixed inset-0 z-50 flex items-center justify-center px-4"
-            style={{ pointerEvents: 'none' }}
-          >
-            <div className="w-full max-w-md rounded-2xl overflow-hidden"
-              style={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)', pointerEvents: 'auto' }}>
-
+          <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.92, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.92, y: 20 }}
+              transition={{ type: 'spring', stiffness: 300, damping: 25 }}
+              className="w-full max-w-md rounded-2xl overflow-hidden"
+              style={{ background: '#111', border: '1px solid rgba(255,255,255,0.08)' }}
+            >
               {/* Header */}
               <div className="px-8 pt-8 pb-6 relative"
                 style={{ borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
@@ -97,20 +107,15 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
                   className="absolute top-5 right-5 w-8 h-8 rounded-lg flex items-center justify-center text-white/40 hover:text-white hover:bg-white/10 transition-all">
                   <X size={16} />
                 </button>
-
-                {/* Icon */}
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-4"
                   style={{ background: 'linear-gradient(135deg, #6d28d9, #7c3aed)' }}>
                   <Ticket size={22} color="#f5c842" />
                 </div>
-
                 <h2 className="text-2xl font-black text-white font-urban mb-1">
                   {mode === 'login' ? 'Welcome Back' : 'Create Account'}
                 </h2>
                 <p className="text-white/40 text-sm">
-                  {mode === 'login'
-                    ? 'Sign in to book your tickets'
-                    : 'Join EventSphere to get started'}
+                  {mode === 'login' ? 'Sign in to book your tickets' : 'Join EventSphere to get started'}
                 </p>
               </div>
 
@@ -119,10 +124,10 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
                 {/* Google Button */}
                 <motion.button
                   whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-                  onClick={handleGoogle}
+                  onClick={() => { setGoogleLoading(true); googleLogin(); }}
                   disabled={googleLoading}
                   className="w-full flex items-center justify-center gap-3 py-3.5 rounded-xl font-semibold text-sm transition-all"
-                  style={{ background: '#fff', color: '#1a1a1a', opacity: googleLoading ? 0.7 : 1 }}>
+                  style={{ background: '#fff', color: '#1a1a1a', opacity: googleLoading ? 0.7 : 1, cursor: googleLoading ? 'wait' : 'pointer' }}>
                   {googleLoading ? (
                     <motion.span animate={{ rotate: 360 }} transition={{ duration: 0.8, repeat: Infinity, ease: 'linear' }}
                       className="w-5 h-5 border-2 border-gray-300 border-t-gray-700 rounded-full inline-block" />
@@ -134,7 +139,7 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
                       <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
                     </svg>
                   )}
-                  {googleLoading ? 'Connecting...' : 'Continue with Google'}
+                  {googleLoading ? 'Connecting to Google...' : 'Continue with Google'}
                 </motion.button>
 
                 {/* Divider */}
@@ -146,16 +151,12 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
 
                 {/* Form */}
                 <form onSubmit={handleSubmit} className="space-y-3">
-
-                  {/* Name (signup only) */}
                   <AnimatePresence>
                     {mode === 'signup' && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}>
+                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
                         <div className="relative">
                           <User size={14} className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" color="rgba(255,255,255,0.25)" />
-                          <input name="name" type="text" placeholder="Full name" value={form.name}
-                            onChange={handleChange}
+                          <input name="name" type="text" placeholder="Full name" value={form.name} onChange={handleChange}
                             className="w-full rounded-xl pl-11 pr-4 py-3.5 text-white text-sm outline-none placeholder-white/20"
                             style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.07)' }}
                             onFocus={e => e.target.style.borderColor = '#7c3aed'}
@@ -165,18 +166,15 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
                     )}
                   </AnimatePresence>
 
-                  {/* Email */}
                   <div className="relative">
                     <Mail size={14} className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" color="rgba(255,255,255,0.25)" />
-                    <input name="email" type="email" placeholder="Email address" value={form.email}
-                      onChange={handleChange}
+                    <input name="email" type="email" placeholder="Email address" value={form.email} onChange={handleChange}
                       className="w-full rounded-xl pl-11 pr-4 py-3.5 text-white text-sm outline-none placeholder-white/20"
                       style={{ background: '#0a0a0a', border: '1px solid rgba(255,255,255,0.07)' }}
                       onFocus={e => e.target.style.borderColor = '#7c3aed'}
                       onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.07)'} />
                   </div>
 
-                  {/* Password */}
                   <div className="relative">
                     <Lock size={14} className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" color="rgba(255,255,255,0.25)" />
                     <input name="password" type={showPass ? 'text' : 'password'} placeholder="Password"
@@ -191,7 +189,6 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
                     </button>
                   </div>
 
-                  {/* Error */}
                   {error && (
                     <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }}
                       className="text-xs text-red-400 px-1 flex items-center gap-1.5">
@@ -199,7 +196,6 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
                     </motion.p>
                   )}
 
-                  {/* Submit */}
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
                     type="submit" disabled={loading}
                     className="w-full py-3.5 rounded-xl font-bold text-sm font-urban text-white"
@@ -214,7 +210,6 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
                   </motion.button>
                 </form>
 
-                {/* Toggle */}
                 <p className="text-center text-sm text-white/40 pb-2">
                   {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
                   <button onClick={() => { setMode(mode === 'login' ? 'signup' : 'login'); setError(''); setForm({ name: '', email: '', password: '' }); }}
@@ -223,8 +218,8 @@ export default function LoginModal({ isOpen, onClose, onSuccess }) {
                   </button>
                 </p>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
