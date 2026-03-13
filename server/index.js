@@ -9,6 +9,7 @@ const { initDB } = require('./config/db');
 const eventRoutes = require('./routes/eventRoutes');
 const bookingRoutes = require('./routes/bookingRoutes');
 const uploadRoutes = require('./routes/uploadRoutes');
+const paymentRoutes = require('./routes/paymentRoutes');
 const { errorHandler } = require('./middleware/validation');
 const setupSockets = require('./sockets/socketHandler');
 
@@ -37,6 +38,7 @@ app.use((req, res, next) => { req.io = io; next(); });
 app.use('/api/events', eventRoutes);
 app.use('/api/bookings', bookingRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/payment', paymentRoutes);
 
 app.get('/', (req, res) => res.json({ status: 'EventSphere API running ✅' }));
 app.get('/api/health', (req, res) => res.json({ status: 'ok', timestamp: new Date() }));

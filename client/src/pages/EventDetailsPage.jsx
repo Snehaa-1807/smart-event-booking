@@ -379,38 +379,78 @@ export default function EventDetailsPage() {
   async function handleBook() {
     if (!validateForm()) return;
     setBookingLoading(true);
-    try {
-      const payload = {
-        event_id: parseInt(id),
-        name: form.name.trim(),
-        email: form.email.trim(),
-        mobile: form.mobile.trim().replace(/\s/g, ''),
-        quantity: parseInt(quantity),
-      };
 
-      // Use raw fetch to avoid any axios interceptor issues
-      const response = await fetch(`${SERVER_URL}/api/bookings`, {
+    try {
+      // Step 1: Create Razorpay order
+      const orderRes = await fetch(`${SERVER_URL}/api/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ event_id: parseInt(id), quantity: parseInt(quantity) }),
       });
+      const orderJson = await orderRes.json();
+      if (!orderRes.ok || !orderJson.success) throw new Error(orderJson.message || 'Payment initiation failed');
 
-      const json = await response.json();
-      console.log('Booking response:', json);
+      const { order_id, amount, currency, key_id } = orderJson.data;
+      setBookingLoading(false);
 
-      if (!response.ok || !json.success) {
-        throw new Error(json.message || json.errors?.[0] || 'Booking failed');
-      }
+      // Step 2: Open Razorpay popup
+      const options = {
+        key: key_id,
+        amount,
+        currency,
+        name: 'EventSphere',
+        description: event?.title || 'Event Ticket',
+        order_id,
+        prefill: {
+          name: form.name.trim(),
+          email: form.email.trim(),
+          contact: form.mobile.trim(),
+        },
+        theme: { color: '#7c3aed' },
+        handler: async function (response) {
+          // Step 3: Verify payment + create booking
+          setBookingLoading(true);
+          try {
+            const verifyRes = await fetch(`${SERVER_URL}/api/payment/verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                event_id: parseInt(id),
+                name: form.name.trim(),
+                email: form.email.trim(),
+                mobile: form.mobile.trim().replace(/\s/g, ''),
+                quantity: parseInt(quantity),
+              }),
+            });
+            const verifyJson = await verifyRes.json();
+            if (!verifyRes.ok || !verifyJson.success) throw new Error(verifyJson.message || 'Payment verification failed');
 
-      const booking = json.data;
-      setBookingResult(booking);
-      setStep(2);
-      fireConfetti();
-      toast.success('🎉 Booking confirmed!');
+            setBookingResult(verifyJson.data);
+            setStep(2);
+            fireConfetti();
+            toast.success('🎉 Payment successful! Booking confirmed!');
+          } catch (err) {
+            toast.error(err.message || 'Booking failed after payment');
+          } finally {
+            setBookingLoading(false);
+          }
+        },
+        modal: {
+          ondismiss: () => {
+            setBookingLoading(false);
+            toast.error('Payment cancelled');
+          },
+        },
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (err) {
-      console.error('Booking error:', err);
-      toast.error(err.message || 'Booking failed. Please try again.');
-    } finally {
+      console.error('Payment error:', err);
+      toast.error(err.message || 'Payment failed. Please try again.');
       setBookingLoading(false);
     }
   }

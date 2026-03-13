@@ -32,10 +32,10 @@ const BookingModel = {
     return rows[0];
   },
 
-  async create({ event_id, name, email, mobile, quantity, total_amount }) {
+  async create({ event_id, name, email, mobile, quantity, total_amount, payment_id = null, payment_status = 'paid' }) {
     const [result] = await pool.query(
-      'INSERT INTO bookings (event_id, name, email, mobile, quantity, total_amount) VALUES (?,?,?,?,?,?)',
-      [event_id, name, email, mobile, quantity, total_amount]
+      'INSERT INTO bookings (event_id, name, email, mobile, quantity, total_amount, payment_id, payment_status) VALUES (?,?,?,?,?,?,?,?)',
+      [event_id, name, email, mobile, quantity, total_amount, payment_id, payment_status]
     );
     return result.insertId;
   },
